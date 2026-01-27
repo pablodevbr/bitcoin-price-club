@@ -1,0 +1,5 @@
+{
+  "name": "Bitcoin Price Club",
+  "description": "Real-time Bitcoin price tracker featuring Satoshi value conversion, AI-driven market insights, and a sleek dark/light mode interface.",
+  "requestFramePermissions": []
+}

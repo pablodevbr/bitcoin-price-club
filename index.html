@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bitcoin Price Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              bitcoin: {
+                50: '#fff8e1',
+                100: '#ffecb3',
+                200: '#ffe082',
+                300: '#ffd54f',
+                400: '#ffca28',
+                500: '#ffc107',
+                600: '#ffb300',
+                700: '#ffa000',
+                800: '#ff8f00',
+                900: '#f57c00',
+                DEFAULT: '#F7931A',
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "recharts": "https://esm.sh/recharts@^3.5.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.1/",
+    "react/": "https://esm.sh/react@^19.2.1/",
+    "react": "https://esm.sh/react@^19.2.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.559.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.32.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
