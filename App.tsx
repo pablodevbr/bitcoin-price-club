@@ -9,6 +9,7 @@ import { fetchBitcoinData } from './services/cryptoService';
 import { BitcoinData } from './types';
 import { Loader2 } from 'lucide-react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 
 const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState(true);
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       <SpeedInsights />
+      <Analytics />
       <header className="p-6 flex justify-between items-center max-w-7xl mx-auto w-full sticky top-0 z-50 backdrop-blur-md bg-opacity-80 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-bitcoin rounded-full flex items-center justify-center shadow-lg shadow-bitcoin/20">
