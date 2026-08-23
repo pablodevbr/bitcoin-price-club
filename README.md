@@ -19,9 +19,17 @@
 
 *   **Framework:** React 19 + Vite
 *   **Styling:** Tailwind CSS
-*   **AI:** Google GenAI SDK (Gemini 1.5 Flash)
+*   **AI:** Google GenAI SDK (Gemini 2.5 Flash Lite)
+*   **Prompt Management:** Markdown files (`prompts/`) with dynamic variable interpolation
 *   **Charts:** Recharts
 *   **Icons:** Lucide React
+
+## 🧠 AI Prompts Customization
+
+All AI prompts are stored as modular Markdown files in the `prompts/` directory:
+*   `prompts/market-insight.md`: Controls the personality and guidelines for market insights. Uses placeholders `{{price}}` and `{{change24h}}`.
+
+You can freely customize the markdown files to tune the AI persona, style, and language.
 
 ## 💻 Getting Started
 
