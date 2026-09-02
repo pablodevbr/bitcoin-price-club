@@ -1,5 +1,5 @@
 // Dynamic OpenGraph / Social Card Image Generator: /api/og
-// High performance SVG & PNG image renderer powered by @resvg/resvg-js
+// High-End Creative & Minimalist Card (Borderless, Luxury Crypto Aesthetic)
 
 import { Resvg } from '@resvg/resvg-js';
 import { getDailySnapshot } from '../lib/kv';
@@ -22,122 +22,152 @@ function escapeXml(unsafe: string): string {
 }
 
 /**
- * Generates the 1200x630 SVG template with Bitcoin Price Club dark aesthetic.
+ * Generates an ultra-professional, borderless, high-end 1200x630 SVG artwork.
+ * Design Highlights:
+ * - Completely borderless (zero internal or external stroke borders).
+ * - Multi-layered atmospheric aurora lighting & subtle 3D translucent ₿ watermark.
+ * - Massive typographic hierarchy: Huge high-contrast Bitcoin price hero.
+ * - Subordinate Satoshi purchasing power highlight bar.
+ * - Clean, discrete branding and date.
  */
-function generateCardSvg(data: {
+function generateCleanCardSvg(data: {
   price: string;
   change: string;
   isPositive: boolean;
   sats: string;
-  summary: string;
   date: string;
 }): string {
-  const changeBg = data.isPositive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-  const changeBorder = data.isPositive ? '#10b981' : '#ef4444';
+  const changeBg = data.isPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
   const changeText = data.isPositive ? '#34d399' : '#f87171';
+  const changeArrow = data.isPositive ? '▲ ' : '▼ ';
 
   return `
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Background Radial Gradients -->
-    <radialGradient id="bgGlowOrange" cx="90%" cy="10%" r="50%">
+    <!-- Background Atmospheric Aurora Glows -->
+    <radialGradient id="auroraOrange" cx="80%" cy="25%" r="65%">
       <stop offset="0%" stop-color="#F7931A" stop-opacity="0.22" />
-      <stop offset="100%" stop-color="#030712" stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="bgGlowIndigo" cx="10%" cy="90%" r="50%">
-      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.18" />
-      <stop offset="100%" stop-color="#030712" stop-opacity="0" />
+      <stop offset="50%" stop-color="#FF9900" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#04060a" stop-opacity="0" />
     </radialGradient>
 
-    <!-- Card Background Fill -->
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.85" />
-      <stop offset="100%" stop-color="#0b0f19" stop-opacity="0.95" />
+    <radialGradient id="auroraPurple" cx="15%" cy="85%" r="60%">
+      <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.16" />
+      <stop offset="60%" stop-color="#0F172A" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#04060a" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Glass Fill with Zero Stroke -->
+    <linearGradient id="heroGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.04)" />
+      <stop offset="100%" stop-color="rgba(255, 255, 255, 0.01)" />
     </linearGradient>
 
-    <linearGradient id="aiCardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.45" />
-      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.65" />
+    <linearGradient id="satsGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(247, 147, 26, 0.08)" />
+      <stop offset="100%" stop-color="rgba(255, 255, 255, 0.02)" />
+    </linearGradient>
+
+    <!-- Gold Text Gradient -->
+    <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F7931A" />
+      <stop offset="100%" stop-color="#FDBA74" />
     </linearGradient>
 
     <style>
-      .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 900; font-size: 28px; fill: #ffffff; }
-      .subtitle { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 13px; fill: #94a3b8; letter-spacing: 2px; }
-      .badge-date { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 15px; fill: #cbd5e1; }
-      .label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 14px; fill: #94a3b8; letter-spacing: 1.5px; }
-      .sats-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 14px; fill: #fbbf24; letter-spacing: 1.5px; }
-      .price-value { font-family: 'SF Pro Display', -apple-system, 'Segoe UI', Roboto, monospace; font-weight: 900; font-size: 46px; fill: #ffffff; }
-      .change-value { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 16px; fill: ${changeText}; }
-      .sats-value { font-family: 'SF Pro Display', -apple-system, 'Segoe UI', Roboto, monospace; font-weight: 900; font-size: 46px; fill: #F7931A; }
-      .sats-unit { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 20px; fill: #fde68a; }
-      .ai-header { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 13px; fill: #a5b4fc; letter-spacing: 1.5px; }
-      .ai-text { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 20px; fill: #e2e8f0; }
-      .footer-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 14px; fill: #64748b; }
+      .brand-title { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; font-weight: 800; font-size: 19px; fill: #ffffff; letter-spacing: 1px; }
+      .brand-tag { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 600; font-size: 11px; fill: #64748b; letter-spacing: 2px; }
+      .date-badge { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 600; font-size: 14px; fill: #94a3b8; }
+      
+      .kicker-label { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 800; font-size: 13px; fill: #94a3b8; letter-spacing: 3px; }
+      .main-price { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-weight: 900; font-size: 106px; fill: #ffffff; letter-spacing: -3px; }
+      .main-currency { font-family: 'SF Pro Display', -apple-system, sans-serif; font-weight: 700; font-size: 28px; fill: #64748b; }
+      
+      .pill-text { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 800; font-size: 20px; fill: ${changeText}; }
+      
+      .sats-title { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 700; font-size: 12px; fill: #fbbf24; letter-spacing: 2px; }
+      .sats-digits { font-family: 'SF Pro Display', -apple-system, monospace; font-weight: 900; font-size: 40px; fill: url(#goldText); }
+      .sats-suffix { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 700; font-size: 18px; fill: #fde68a; }
+      .sats-caption { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 500; font-size: 14px; fill: #94a3b8; }
+      
+      .footer-url { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 700; font-size: 15px; fill: #94a3b8; letter-spacing: 0.5px; }
+      .footer-live { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; font-weight: 600; font-size: 13px; fill: #34d399; letter-spacing: 1px; }
     </style>
   </defs>
 
-  <!-- Background Base -->
-  <rect width="1200" height="630" fill="#030712" />
-  <rect width="1200" height="630" fill="url(#bgGlowOrange)" />
-  <rect width="1200" height="630" fill="url(#bgGlowIndigo)" />
+  <!-- Deep Obsidian Canvas (Zero Borders) -->
+  <rect width="1200" height="630" fill="#04060a" />
+  
+  <!-- Aurora Atmosphere Layers -->
+  <rect width="1200" height="630" fill="url(#auroraOrange)" />
+  <rect width="1200" height="630" fill="url(#auroraPurple)" />
 
-  <!-- Subtle Outer Border -->
-  <rect x="20" y="20" width="1160" height="590" rx="32" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
-
-  <!-- HEADER -->
-  <g transform="translate(60, 55)">
-    <!-- Bitcoin Circle Icon -->
-    <circle cx="28" cy="28" r="28" fill="#F7931A" />
-    <text x="28" y="38" font-family="sans-serif" font-weight="900" font-size="32" fill="#ffffff" text-anchor="middle">₿</text>
-
-    <!-- Brand Title -->
-    <text x="74" y="24" class="title">BITCOIN PRICE CLUB</text>
-    <text x="74" y="44" class="subtitle">DAILY INTELLIGENCE &amp; ANALYTICS</text>
-
-    <!-- Date Badge -->
-    <rect x="910" y="4" width="170" height="42" rx="21" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1" />
-    <text x="995" y="30" class="badge-date" text-anchor="middle">${escapeXml(data.date)}</text>
+  <!-- Sculptural Translucent Bitcoin Watermark (Creative Background Art) -->
+  <g transform="translate(860, 420)" opacity="0.045">
+    <circle cx="160" cy="0" r="240" fill="#F7931A" />
+    <text x="160" y="90" font-family="-apple-system, sans-serif" font-weight="900" font-size="340" fill="#04060a" text-anchor="middle">₿</text>
   </g>
 
-  <!-- METRICS SECTION -->
-  <!-- Left Card: Bitcoin Price -->
-  <g transform="translate(60, 140)">
-    <rect width="560" height="155" rx="24" fill="url(#cardGrad)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1" />
-    <text x="36" y="48" class="label">BITCOIN PRICE (USD)</text>
-    <text x="36" y="112" class="price-value">${escapeXml(data.price)}</text>
+  <!-- 1. HEADER (Borderless, Subtle & Refined) -->
+  <g transform="translate(72, 60)">
+    <!-- Sleek Coin Emblem -->
+    <circle cx="22" cy="22" r="22" fill="#F7931A" />
+    <text x="22" y="30" font-family="sans-serif" font-weight="900" font-size="24" fill="#ffffff" text-anchor="middle">₿</text>
 
-    <!-- 24h Change Pill -->
-    <rect x="420" y="80" width="105" height="36" rx="18" fill="${changeBg}" stroke="${changeBorder}" stroke-width="1" />
-    <text x="472" y="104" class="change-value" text-anchor="middle">${escapeXml(data.change)}</text>
+    <!-- Brand Signature -->
+    <text x="56" y="18" class="brand-title">BITCOIN PRICE CLUB</text>
+    <text x="56" y="34" class="brand-tag">DAILY MARKET INTELLIGENCE</text>
+
+    <!-- Soft Date Capsule (No Border) -->
+    <rect x="890" y="4" width="166" height="36" rx="18" fill="rgba(255, 255, 255, 0.05)" />
+    <text x="973" y="27" class="date-badge" text-anchor="middle">${escapeXml(data.date)}</text>
   </g>
 
-  <!-- Right Card: Satoshis Power -->
-  <g transform="translate(650, 140)">
-    <rect width="490" height="155" rx="24" fill="url(#cardGrad)" stroke="rgba(247, 147, 26, 0.25)" stroke-width="1" />
-    <text x="36" y="48" class="sats-label">PURCHASING POWER ($1 USD)</text>
-    <text x="36" y="112" class="sats-value">${escapeXml(data.sats)}</text>
-    <text x="360" y="110" class="sats-unit">Sats</text>
+  <!-- 2. MAIN HERO: MASSIVE BITCOIN SPOT PRICE (Borderless) -->
+  <g transform="translate(72, 140)">
+    <!-- Soft Ambient Surface (Zero Stroke Borders) -->
+    <rect width="1056" height="240" rx="28" fill="url(#heroGlass)" />
+
+    <!-- Section Kicker -->
+    <text x="50" y="52" class="kicker-label">SPOT PRICE</text>
+
+    <!-- Massive High-Contrast Price Display -->
+    <text x="50" y="156" class="main-price">${escapeXml(data.price)}</text>
+    <text x="${escapeXml(data.price).length > 9 ? '710' : '630'}" y="118" class="main-currency">USD</text>
+
+    <!-- 24h Variation Capsule (No Border) -->
+    <rect x="${escapeXml(data.price).length > 9 ? '790' : '710'}" y="86" width="150" height="46" rx="23" fill="${changeBg}" />
+    <text x="${escapeXml(data.price).length > 9 ? '865' : '785'}" y="116" class="pill-text" text-anchor="middle">${changeArrow}${escapeXml(data.change)}</text>
+
+    <!-- Context Meta Subline -->
+    <text x="50" y="202" font-family="-apple-system, sans-serif" font-weight="500" font-size="14" fill="#64748b">Real-time consolidated index • Updated every 60s</text>
   </g>
 
-  <!-- AI MARKET SENTIMENT CARD -->
-  <g transform="translate(60, 320)">
-    <rect width="1080" height="185" rx="24" fill="url(#aiCardGrad)" stroke="rgba(129, 140, 248, 0.25)" stroke-width="1" />
-    
-    <!-- AI Tag Header -->
-    <text x="36" y="44" class="ai-header">✨  GEMINI MARKET SENTIMENT</text>
+  <!-- 3. SECONDARY HERO: SATOSHI PURCHASING POWER (Borderless & Seamless) -->
+  <g transform="translate(72, 404)">
+    <!-- Soft Amber Glow Surface (Zero Stroke Borders) -->
+    <rect width="1056" height="120" rx="24" fill="url(#satsGlass)" />
 
-    <!-- AI Quote Text -->
-    <foreignObject x="36" y="62" width="1008" height="105">
-      <div xmlns="http://www.w3.org/1999/xhtml" style="color: #e2e8f0; font-family: Georgia, serif; font-style: italic; font-size: 20px; line-height: 1.45;">
-        "${escapeXml(data.summary)}"
-      </div>
-    </foreignObject>
+    <!-- Left: Satoshis Counter -->
+    <g transform="translate(50, 32)">
+      <text x="0" y="16" class="sats-title">PURCHASING POWER FOR $1.00 USD</text>
+      <text x="0" y="62" class="sats-digits">${escapeXml(data.sats)}</text>
+      <text x="${escapeXml(data.sats).length * 26 + 12}" y="58" class="sats-suffix">Satoshis</text>
+    </g>
+
+    <!-- Right: Informational Context -->
+    <g transform="translate(680, 52)">
+      <text x="326" y="16" class="sats-caption" text-anchor="end">1 Bitcoin = 100,000,000 Satoshis</text>
+      <text x="326" y="38" class="sats-caption" text-anchor="end" fill="#64748b">Stack sats, preserve sovereignty</text>
+    </g>
   </g>
 
-  <!-- FOOTER -->
-  <g transform="translate(60, 560)">
-    <text x="0" y="0" class="footer-text">bitcoinprice.club</text>
-    <text x="1080" y="0" class="footer-text" text-anchor="end">Automated Daily Broadcast • Live On-Chain Data</text>
+  <!-- 4. FOOTER: MINIMALIST BRAND & LIVE INDICATOR -->
+  <g transform="translate(72, 578)">
+    <text x="0" y="0" class="footer-url">bitcoinprice.club</text>
+    <g transform="translate(1056, 0)">
+      <text x="0" y="0" class="footer-live" text-anchor="end">● LIVE ON-CHAIN</text>
+    </g>
   </g>
 </svg>
 `.trim();
@@ -163,18 +193,16 @@ export default async function handler(req: any, res?: any) {
     let priceParam = getParam('price');
     let changeParam = getParam('change') || getParam('change24h');
     let satsParam = getParam('sats');
-    let summaryParam = getParam('summary') || getParam('ai') || getParam('quote');
     const formatParam = getParam('format') || 'png';
 
     // 2. Fallback to KV snapshot or live crypto fetch if parameters are omitted
-    if (!priceParam || !changeParam || !satsParam || !summaryParam) {
+    if (!priceParam || !changeParam || !satsParam) {
       try {
         const cachedSnapshot = await getDailySnapshot();
         if (cachedSnapshot) {
           if (!priceParam) priceParam = String(cachedSnapshot.priceUsd);
           if (!changeParam) changeParam = String(cachedSnapshot.change24h);
           if (!satsParam) satsParam = String(cachedSnapshot.satoshisPerDollar);
-          if (!summaryParam) summaryParam = cachedSnapshot.summary;
         } else {
           // If KV snapshot is not populated yet, fetch live market data automatically
           const liveData = await getBitcoinMarketData();
@@ -198,17 +226,12 @@ export default async function handler(req: any, res?: any) {
 
     const isPositive = numericChange >= 0;
     const formattedChange = isNaN(numericChange)
-      ? '+0.00%'
-      : `${isPositive ? '+' : ''}${numericChange.toFixed(2)}%`;
+      ? '0.00%'
+      : `${Math.abs(numericChange).toFixed(2)}%`;
 
     const formattedSats = isNaN(numericSats)
       ? '1,036'
       : numericSats.toLocaleString('en-US');
-
-    const summaryText =
-      summaryParam && summaryParam.trim().length > 0
-        ? summaryParam.trim()
-        : 'Bitcoin maintains strong network fundamentals as market momentum consolidates.';
 
     const currentDate = new Date().toLocaleDateString('en-US', {
       month: 'short',
@@ -216,28 +239,30 @@ export default async function handler(req: any, res?: any) {
       year: 'numeric',
     });
 
-    // 4. Generate SVG
-    const svg = generateCardSvg({
+    // 4. Generate Clean SVG Artwork
+    const svg = generateCleanCardSvg({
       price: formattedPrice,
       change: formattedChange,
       isPositive,
       sats: formattedSats,
-      summary: summaryText,
       date: currentDate,
     });
+
+    // Cache headers (no-cache in dev to allow immediate visual updates)
+    const cacheHeader = 'no-cache, no-store, must-revalidate';
 
     // If SVG requested directly
     if (formatParam === 'svg') {
       if (res && typeof res.setHeader === 'function') {
         res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+        res.setHeader('Cache-Control', cacheHeader);
         return res.end(svg);
       }
       return new Response(svg, {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml',
-          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          'Cache-Control': cacheHeader,
         },
       });
     }
@@ -255,7 +280,7 @@ export default async function handler(req: any, res?: any) {
 
     if (res && typeof res.setHeader === 'function') {
       res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+      res.setHeader('Cache-Control', cacheHeader);
       return res.end(Buffer.from(pngBuffer));
     }
 
@@ -263,7 +288,7 @@ export default async function handler(req: any, res?: any) {
       status: 200,
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        'Cache-Control': cacheHeader,
       },
     });
   } catch (error) {

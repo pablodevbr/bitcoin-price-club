@@ -45,12 +45,17 @@ export async function sendTelegramBroadcast(
   // 1. Try sending photo with caption if photoUrl is available
   if (photoUrl && photoUrl.trim().length > 0) {
     try {
+      // Ensure unique URL with timestamp so Telegram CDN never serves a cached image from previous runs
+      const cacheBusterUrl = photoUrl.includes('t=')
+        ? photoUrl
+        : `${photoUrl}${photoUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+
       const photoResponse = await fetch(`${baseTelegramUrl}/sendPhoto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          photo: photoUrl,
+          photo: cacheBusterUrl,
           caption: caption,
           parse_mode: 'HTML',
         }),

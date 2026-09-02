@@ -48,27 +48,41 @@ export default async function handler(req: any, res?: any) {
     };
     await saveDailySnapshot(snapshot);
 
-    // 5. Send broadcast to Telegram channel
+    // 5. Send broadcast to Telegram channel with AI text accompanying the clean image card
     const formattedPrice = `$${marketData.priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const formattedSats = `${marketData.satoshisPerDollar.toLocaleString('en-US')} sats`;
-    const changeSign = marketData.change24h > 0 ? '+' : '';
+    const changeSign = marketData.change24h >= 0 ? '+' : '';
 
-    const telegramCaption = `
-<b>₿ Bitcoin Daily Update</b>
+    // Truncate summary if needed so the total Telegram photo caption never exceeds 1000 characters
+    let cleanSummary = summary.trim();
+    const maxSummaryLength = 700;
+    if (cleanSummary.length > maxSummaryLength) {
+      cleanSummary = `${cleanSummary.substring(0, maxSummaryLength - 3)}...`;
+    }
 
-<b>Price:</b> ${formattedPrice} USD (${changeSign}${marketData.change24h}%)
-<b>Satoshis per $1:</b> ${formattedSats}
+    let telegramCaption = `
+<b>₿ Bitcoin Price Club • Daily Update</b>
 
-<i>${summary}</i>
+💰 <b>Price:</b> ${formattedPrice} USD (<code>${changeSign}${marketData.change24h}%</code>)
+⚡ <b>Satoshis per $1:</b> <code>${formattedSats}</code>
+
+🧠 <b>AI Market Insight:</b>
+<i>"${cleanSummary}"</i>
+
+🌐 <a href="https://bitcoinprice.club">bitcoinprice.club</a>
 `.trim();
 
-    // Dynamic OG image URL for Telegram and social embeds
+    // Enforce strict 1000 character safety limit for Telegram photo captions
+    if (telegramCaption.length > 1000) {
+      telegramCaption = `${telegramCaption.substring(0, 995)}...`;
+    }
+
+    // Dynamic clean OG image URL with cache-buster for Telegram
     const host =
       (req?.headers?.get ? req.headers.get('host') : req?.headers?.host) ||
       'bitcoinprice.club';
     const protocol = host.includes('localhost') ? 'http' : 'https';
-    const encodedSummary = encodeURIComponent(summary);
-    const ogImageUrl = `${protocol}://${host}/api/og?price=${marketData.priceUsd}&change=${marketData.change24h}&sats=${marketData.satoshisPerDollar}&summary=${encodedSummary}`;
+    const ogImageUrl = `${protocol}://${host}/api/og?price=${marketData.priceUsd}&change=${marketData.change24h}&sats=${marketData.satoshisPerDollar}&t=${Date.now()}`;
 
     const telegramResult = await sendTelegramBroadcast(ogImageUrl, telegramCaption);
 
