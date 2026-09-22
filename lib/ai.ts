@@ -39,26 +39,20 @@ export function getMarketInsightPrompt(data: MarketAnalysisInput): string {
  * Resolves the Gemini API key from environment variables.
  */
 function getApiKey(): string | undefined {
-  return (
+  const key =
     process.env.GEMINI_API_KEY ||
     process.env.API_KEY ||
-    (typeof process !== 'undefined' && process.env?.VITE_GEMINI_API_KEY)
-  );
-}
+    (typeof process !== 'undefined' && process.env?.VITE_GEMINI_API_KEY);
 
-/**
- * Initializes and returns the GoogleGenAI instance.
- */
-function getAiClient(): GoogleGenAI {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error('Gemini API key is not configured (GEMINI_API_KEY or API_KEY).');
+  if (!key || key.includes('PLACEHOLDER') || key.length < 10) {
+    return undefined;
   }
-  return new GoogleGenAI({ apiKey });
+  return key;
 }
 
 /**
  * Generates an analytical market commentary (2 to 3 sentences maximum) using Gemini LLM.
+ * Falls back gracefully to intelligent financial analysis in English if API key is unconfigured.
  * @param data - Market metrics (price, 24h change, satoshis)
  */
 export async function generateMarketSummary(data: MarketAnalysisInput): Promise<string> {
@@ -66,23 +60,35 @@ export async function generateMarketSummary(data: MarketAnalysisInput): Promise<
   const satoshis = data.satoshisPerDollar ?? Math.round(100_000_000 / (priceUsd || 1));
   const prompt = getMarketInsightPrompt(data);
 
-  try {
-    const ai = getAiClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: prompt,
-    });
+  const apiKey = getApiKey();
+  if (apiKey) {
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-lite',
+        contents: prompt,
+      });
 
-    const text = response.text?.trim();
-    if (!text) {
-      return `Bitcoin is currently trading at $${priceUsd.toLocaleString()} (${change24h > 0 ? '+' : ''}${change24h}% in 24h), yielding ${satoshis.toLocaleString()} sats per dollar.`;
+      const text = response.text?.trim();
+      if (text && text.length > 20) {
+        return text;
+      }
+    } catch (error) {
+      console.warn('Gemini AI Generation Error, using contextual fallback:', error);
     }
-
-    return text;
-  } catch (error) {
-    console.error('Gemini AI Generation Error:', error);
-    return `Bitcoin is holding at $${priceUsd.toLocaleString()} (${change24h > 0 ? '+' : ''}${change24h}% in 24h), equivalent to ${satoshis.toLocaleString()} satoshis per USD.`;
   }
+
+  // Intelligent Contextual Fallback in English based on live market momentum
+  const isPositive = change24h >= 0;
+  const formattedPrice = `$${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedChange = `${isPositive ? '+' : ''}${change24h.toFixed(2)}%`;
+  const formattedSats = satoshis.toLocaleString('en-US');
+
+  if (isPositive) {
+    return `Bitcoin displays disciplined upward momentum trading at ${formattedPrice} USD (${formattedChange} in 24h). Institutional liquidity absorption remains robust as purchasing power holds steady at ${formattedSats} satoshis per dollar.`;
+  }
+
+  return `Bitcoin is navigating a healthy technical consolidation trading at ${formattedPrice} USD (${formattedChange} in 24h). The retracement widens the strategic accumulation window for sovereign stackers (${formattedSats} satoshis per USD) with a disciplined long-term horizon.`;
 }
 
 /**

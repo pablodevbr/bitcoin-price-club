@@ -19,12 +19,13 @@ function isValidTelegramConfig(token?: string, chatId?: string): boolean {
 
 /**
  * Sends a daily snapshot broadcast to the Telegram channel with dynamic card and formatted caption.
+ * Supports public URL or direct Buffer upload (multipart/form-data).
  * Skips gracefully if credentials are not configured.
- * @param photoUrl - Public URL of the generated OG / card image
+ * @param photo - Public URL string or raw image Buffer/Uint8Array
  * @param caption - Formatted message text (HTML supported)
  */
 export async function sendTelegramBroadcast(
-  photoUrl: string,
+  photo: string | Buffer | Uint8Array,
   caption: string
 ): Promise<TelegramBroadcastResult> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -42,13 +43,41 @@ export async function sendTelegramBroadcast(
 
   const baseTelegramUrl = `https://api.telegram.org/bot${token}`;
 
-  // 1. Try sending photo with caption if photoUrl is available
-  if (photoUrl && photoUrl.trim().length > 0) {
+  // 1. If photo is a direct Buffer or Uint8Array, send via multipart/form-data
+  if (photo && typeof photo !== 'string') {
+    try {
+      const formData = new FormData();
+      formData.append('chat_id', chatId!);
+      const blob = new Blob([photo as any], { type: 'image/png' });
+      formData.append('photo', blob, 'bitcoin_card.png');
+      formData.append('caption', caption);
+      formData.append('parse_mode', 'HTML');
+
+      const photoResponse = await fetch(`${baseTelegramUrl}/sendPhoto`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const photoData = await photoResponse.json();
+
+      if (photoData.ok) {
+        return {
+          ok: true,
+          messageId: photoData.result?.message_id,
+        };
+      }
+
+      console.warn('sendPhoto multipart upload failed:', photoData.description);
+    } catch (uploadError) {
+      console.warn('Error during multipart photo upload to Telegram:', uploadError);
+    }
+  } else if (typeof photo === 'string' && photo.trim().length > 0) {
+    // 2. If photo is a URL
     try {
       // Ensure unique URL with timestamp so Telegram CDN never serves a cached image from previous runs
-      const cacheBusterUrl = photoUrl.includes('t=')
-        ? photoUrl
-        : `${photoUrl}${photoUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      const cacheBusterUrl = photo.includes('t=')
+        ? photo
+        : `${photo}${photo.includes('?') ? '&' : '?'}t=${Date.now()}`;
 
       const photoResponse = await fetch(`${baseTelegramUrl}/sendPhoto`, {
         method: 'POST',
@@ -70,13 +99,13 @@ export async function sendTelegramBroadcast(
         };
       }
 
-      console.warn('sendPhoto failed, falling back to text sendMessage:', photoData.description);
+      console.warn('sendPhoto URL failed, falling back to text sendMessage:', photoData.description);
     } catch (photoError) {
-      console.warn('Network error while dispatching photo to Telegram:', photoError);
+      console.warn('Network error while dispatching photo URL to Telegram:', photoError);
     }
   }
 
-  // 2. Fallback to sending text message
+  // 3. Fallback to sending text message
   try {
     const textResponse = await fetch(`${baseTelegramUrl}/sendMessage`, {
       method: 'POST',

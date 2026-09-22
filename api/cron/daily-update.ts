@@ -61,15 +61,16 @@ export default async function handler(req: any, res?: any) {
     }
 
     let telegramCaption = `
-<b>₿ Bitcoin Price Club • Daily Update</b>
+<b>₿ Bitcoin Price Club • Daily Market Update</b>
 
-💰 <b>Price:</b> ${formattedPrice} USD (<code>${changeSign}${marketData.change24h}%</code>)
-⚡ <b>Satoshis per $1:</b> <code>${formattedSats}</code>
+💰 <b>Spot Price:</b> <code>${formattedPrice} USD</code> (<code>${changeSign}${marketData.change24h}% 24h</code>)
+⚡ <b>Purchasing Power:</b> <code>${formattedSats} / $1.00 USD</code>
 
 🧠 <b>AI Market Insight:</b>
 <i>"${cleanSummary}"</i>
 
 🌐 <a href="https://bitcoinprice.club">bitcoinprice.club</a>
+<i>Tap the card above to open in full view!</i>
 `.trim();
 
     // Enforce strict 1000 character safety limit for Telegram photo captions
@@ -82,7 +83,12 @@ export default async function handler(req: any, res?: any) {
       (req?.headers?.get ? req.headers.get('host') : req?.headers?.host) ||
       'bitcoinprice.club';
     const protocol = host.includes('localhost') ? 'http' : 'https';
-    const ogImageUrl = `${protocol}://${host}/api/og?price=${marketData.priceUsd}&change=${marketData.change24h}&sats=${marketData.satoshisPerDollar}&t=${Date.now()}`;
+    const channelParam = encodeURIComponent(
+      process.env.TELEGRAM_CHANNEL_HANDLE ||
+      process.env.TELEGRAM_CHANNEL_ID ||
+      '@bitcoinpriceclub'
+    );
+    const ogImageUrl = `${protocol}://${host}/api/og?price=${marketData.priceUsd}&change=${marketData.change24h}&sats=${marketData.satoshisPerDollar}&channel=${channelParam}&t=${Date.now()}`;
 
     const telegramResult = await sendTelegramBroadcast(ogImageUrl, telegramCaption);
 
