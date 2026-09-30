@@ -157,7 +157,9 @@ function generateTelegramCardSvg(data: {
       <ellipse cx="0" cy="5" rx="28" ry="17" fill="url(#goldRim)" />
       <ellipse cx="0" cy="0" rx="28" ry="17" fill="url(#goldFace)" stroke="#FEF08A" stroke-width="1.2" />
       <ellipse cx="0" cy="0" rx="23" ry="13.5" fill="none" stroke="rgba(120, 53, 15, 0.45)" stroke-width="1" />
-      <text x="0" y="6" font-family="Inter, sans-serif" font-weight="800" font-size="18" fill="#78350F" text-anchor="middle">₿</text>
+      <rect x="-3.5" y="-9" width="2" height="18" fill="#78350F" />
+      <rect x="1.5" y="-9" width="2" height="18" fill="#78350F" />
+      <text x="0" y="6" font-family="Inter, sans-serif" font-weight="800" font-size="17" fill="#78350F" text-anchor="middle">B</text>
     </g>
 
     <!-- 24h Delta Capsule Badge -->
@@ -192,7 +194,9 @@ function generateTelegramCardSvg(data: {
       <!-- Inner Ring -->
       <circle cx="0" cy="0" r="18" fill="none" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2 2" />
       <!-- Sovereign ₿ Core -->
-      <text x="0" y="8" font-family="Inter, sans-serif" font-weight="800" font-size="22" fill="#090D16" text-anchor="middle">₿</text>
+      <rect x="-4" y="-11" width="2.4" height="22" fill="#090D16" />
+      <rect x="1.6" y="-11" width="2.4" height="22" fill="#090D16" />
+      <text x="0" y="7.5" font-family="Inter, sans-serif" font-weight="800" font-size="21" fill="#090D16" text-anchor="middle">B</text>
     </g>
 
     <!-- Massive High-Contrast Spot Price Hero -->
@@ -235,7 +239,9 @@ function generateTelegramCardSvg(data: {
       <ellipse cx="0" cy="5" rx="27" ry="16" fill="url(#goldRim)" />
       <ellipse cx="0" cy="0" rx="27" ry="16" fill="url(#goldFace)" stroke="#FEF08A" stroke-width="1.2" />
       <ellipse cx="0" cy="0" rx="22" ry="12.5" fill="none" stroke="rgba(120, 53, 15, 0.45)" stroke-width="1" />
-      <text x="0" y="6" font-family="Inter, sans-serif" font-weight="800" font-size="17" fill="#78350F" text-anchor="middle">₿</text>
+      <rect x="-3.5" y="-8.5" width="2" height="17" fill="#78350F" />
+      <rect x="1.5" y="-8.5" width="2" height="17" fill="#78350F" />
+      <text x="0" y="5.5" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#78350F" text-anchor="middle">B</text>
     </g>
 
     <!-- Bottom-Right 3D Bull Momentum Arrow (Rising) -->
@@ -250,7 +256,7 @@ function generateTelegramCardSvg(data: {
 
     <!-- Live Status Pill -->
     <g transform="translate(994, 246)">
-      <circle cx="-136" cy="-4" r="3.5" fill="#10B981" />
+      <circle cx="-166" cy="-3.5" r="3.5" fill="#10B981" />
       <text x="0" y="0" font-family="Inter, sans-serif" font-weight="800" font-size="10" fill="#10B981" text-anchor="end" letter-spacing="1px">LIVE ON-CHAIN CONSENSUS</text>
     </g>
   </g>
