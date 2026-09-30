@@ -6,6 +6,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { getDailySnapshot, saveDailySnapshot } from '../lib/kv.js';
 import { getBitcoinMarketData } from '../lib/crypto.js';
 import { generateMarketSummary } from '../lib/ai.js';
+import { ensureFontFile } from '../lib/font.js';
 
 export const config = {
   maxDuration: 15,
@@ -42,7 +43,8 @@ function generateTelegramCardSvg(data: {
   const changeBg = isPositive ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.18)';
   const changeBorder = isPositive ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)';
   const changeColor = isPositive ? '#10B981' : '#F87171';
-  const changeArrow = isPositive ? '▲ ' : '▼ ';
+  const changeSign = isPositive ? '+' : '-';
+  const changeTrianglePoints = isPositive ? '24,11 30,21 18,21' : '18,12 30,12 24,22';
 
   // SVG grid lines (financial matrix coordinates)
   const verticalGrid: string[] = [];
@@ -147,7 +149,7 @@ function generateTelegramCardSvg(data: {
       <!-- Trailing dots & $$$$ label -->
       <circle cx="8" cy="6" r="2.5" fill="#FDE047" opacity="0.6" />
       <circle cx="18" cy="2" r="2" fill="#FDE047" opacity="0.4" />
-      <text x="96" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="900" font-size="12" fill="#FDE047" letter-spacing="1px">$$$$</text>
+      <text x="96" y="62" font-family="Inter, sans-serif" font-weight="800" font-size="12" fill="#FDE047" letter-spacing="1px">$$$$</text>
     </g>
 
     <!-- Floating 3D Gold Bitcoin Coin (Left) -->
@@ -155,19 +157,20 @@ function generateTelegramCardSvg(data: {
       <ellipse cx="0" cy="5" rx="28" ry="17" fill="url(#goldRim)" />
       <ellipse cx="0" cy="0" rx="28" ry="17" fill="url(#goldFace)" stroke="#FEF08A" stroke-width="1.2" />
       <ellipse cx="0" cy="0" rx="23" ry="13.5" fill="none" stroke="rgba(120, 53, 15, 0.45)" stroke-width="1" />
-      <text x="0" y="6" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="18" fill="#78350F" text-anchor="middle">₿</text>
+      <text x="0" y="6" font-family="Inter, sans-serif" font-weight="800" font-size="18" fill="#78350F" text-anchor="middle">₿</text>
     </g>
 
     <!-- 24h Delta Capsule Badge -->
     <g transform="translate(30, 142)">
       <rect width="138" height="34" rx="17" fill="${changeBg}" stroke="${changeBorder}" stroke-width="1" />
-      <text x="69" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="800" font-size="14" fill="${changeColor}" text-anchor="middle">${changeArrow}${escapeXml(data.change)} 24H</text>
+      <polygon points="${changeTrianglePoints}" fill="${changeColor}" />
+      <text x="78" y="22" font-family="Inter, sans-serif" font-weight="800" font-size="13.5" fill="${changeColor}" text-anchor="middle">${changeSign}${escapeXml(data.change)} 24H</text>
     </g>
 
     <!-- Institutional Footer & Scarcity Mark -->
     <g transform="translate(30, 218)">
-      <text x="0" y="10" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="800" font-size="10.5" fill="#94A3B8" letter-spacing="1px">POWERED BY GEMINI AI</text>
-      <text x="0" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="700" font-size="9" fill="#10B981" letter-spacing="1.8px">21M HARD CAP • PROOF OF WORK</text>
+      <text x="0" y="10" font-family="Inter, sans-serif" font-weight="800" font-size="10.5" fill="#94A3B8" letter-spacing="1px">POWERED BY GEMINI AI</text>
+      <text x="0" y="27" font-family="Inter, sans-serif" font-weight="800" font-size="9" fill="#10B981" letter-spacing="1.8px">21M HARD CAP • PROOF OF WORK</text>
     </g>
   </g>
 
@@ -189,11 +192,11 @@ function generateTelegramCardSvg(data: {
       <!-- Inner Ring -->
       <circle cx="0" cy="0" r="18" fill="none" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2 2" />
       <!-- Sovereign ₿ Core -->
-      <text x="0" y="8" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="22" fill="#090D16" text-anchor="middle">₿</text>
+      <text x="0" y="8" font-family="Inter, sans-serif" font-weight="800" font-size="22" fill="#090D16" text-anchor="middle">₿</text>
     </g>
 
     <!-- Massive High-Contrast Spot Price Hero -->
-    <text x="512" y="150" font-family="'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-weight="900" font-size="${priceFontSize}" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2.5px">${escapeXml(data.price)}</text>
+    <text x="512" y="150" font-family="Inter, sans-serif" font-weight="800" font-size="${priceFontSize}" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2.5px">${escapeXml(data.price)}</text>
 
     <!-- Telegram Pill Button (High Engagement) -->
     <g transform="translate(372, 184)">
@@ -206,7 +209,7 @@ function generateTelegramCardSvg(data: {
       </g>
 
       <!-- Telegram Handle Text -->
-      <text x="64" y="29" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="20" fill="#F1F5F9" letter-spacing="0.5px">${escapeXml(data.channel)}</text>
+      <text x="64" y="29" font-family="Inter, sans-serif" font-weight="800" font-size="20" fill="#F1F5F9" letter-spacing="0.5px">${escapeXml(data.channel)}</text>
     </g>
   </g>
 
@@ -216,14 +219,15 @@ function generateTelegramCardSvg(data: {
   <g id="rightWing">
     <!-- Top-Right Brand Signature -->
     <g transform="translate(994, 34)">
-      <text x="0" y="14" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="900" font-size="19" fill="#FFFFFF" text-anchor="end" letter-spacing="1.5px">BITCOIN PRICE CLUB</text>
-      <text x="0" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="700" font-size="9.5" fill="#64748B" text-anchor="end" letter-spacing="2px">DAILY ON-CHAIN INTELLIGENCE</text>
+      <text x="0" y="14" font-family="Inter, sans-serif" font-weight="800" font-size="19" fill="#FFFFFF" text-anchor="end" letter-spacing="1.5px">BITCOIN PRICE CLUB</text>
+      <text x="0" y="30" font-family="Inter, sans-serif" font-weight="800" font-size="9.5" fill="#64748B" text-anchor="end" letter-spacing="2px">DAILY ON-CHAIN INTELLIGENCE</text>
     </g>
 
     <!-- Satoshi Purchasing Power Badge -->
     <g transform="translate(764, 102)">
       <rect width="230" height="34" rx="17" fill="rgba(245, 158, 11, 0.12)" stroke="rgba(245, 158, 11, 0.3)" stroke-width="1" />
-      <text x="115" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Inter', monospace" font-weight="800" font-size="13.5" fill="#FBBF24" text-anchor="middle">⚡ ${escapeXml(data.sats)} SATS / $1.00 USD</text>
+      <path d="M 24 9 L 17 18 L 22 18 L 20 26 L 28 16 L 23 16 Z" fill="#FBBF24" />
+      <text x="122" y="22" font-family="Inter, sans-serif" font-weight="800" font-size="13" fill="#FBBF24" text-anchor="middle">${escapeXml(data.sats)} SATS / $1.00 USD</text>
     </g>
 
     <!-- Floating 3D Gold Bitcoin Coin (Right) -->
@@ -231,7 +235,7 @@ function generateTelegramCardSvg(data: {
       <ellipse cx="0" cy="5" rx="27" ry="16" fill="url(#goldRim)" />
       <ellipse cx="0" cy="0" rx="27" ry="16" fill="url(#goldFace)" stroke="#FEF08A" stroke-width="1.2" />
       <ellipse cx="0" cy="0" rx="22" ry="12.5" fill="none" stroke="rgba(120, 53, 15, 0.45)" stroke-width="1" />
-      <text x="0" y="6" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="17" fill="#78350F" text-anchor="middle">₿</text>
+      <text x="0" y="6" font-family="Inter, sans-serif" font-weight="800" font-size="17" fill="#78350F" text-anchor="middle">₿</text>
     </g>
 
     <!-- Bottom-Right 3D Bull Momentum Arrow (Rising) -->
@@ -241,13 +245,13 @@ function generateTelegramCardSvg(data: {
       <!-- Arrow Body -->
       <path d="M 0 54 L 24 30 L 44 44 L 70 16 L 68 8 L 94 0 L 86 26 L 76 18 L 46 50 L 26 36 Z" fill="url(#arrowGradUp)" stroke="#ECFDF5" stroke-width="0.8" />
       <!-- Momentum Text -->
-      <text x="-8" y="44" font-family="-apple-system, sans-serif" font-weight="900" font-size="12" fill="#34D399" text-anchor="end">+$1,000</text>
+      <text x="-8" y="44" font-family="Inter, sans-serif" font-weight="800" font-size="12" fill="#34D399" text-anchor="end">+$1,000</text>
     </g>
 
     <!-- Live Status Pill -->
     <g transform="translate(994, 246)">
       <circle cx="-136" cy="-4" r="3.5" fill="#10B981" />
-      <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="700" font-size="10" fill="#10B981" text-anchor="end" letter-spacing="1px">LIVE ON-CHAIN CONSENSUS</text>
+      <text x="0" y="0" font-family="Inter, sans-serif" font-weight="800" font-size="10" fill="#10B981" text-anchor="end" letter-spacing="1px">LIVE ON-CHAIN CONSENSUS</text>
     </g>
   </g>
 </svg>
@@ -377,11 +381,19 @@ export default async function handler(req: any, res?: any) {
       });
     }
 
-    // 5. Render to high-resolution PNG using Resvg (1024 x 267)
+    // 5. Render to high-resolution PNG using Resvg (1024 x 267) with bundled Inter ExtraBold font
+    const fontPath = ensureFontFile();
     const resvg = new Resvg(svg, {
       fitTo: {
         mode: 'width',
         value: 1024,
+      },
+      font: {
+        loadSystemFonts: false,
+        fontFiles: [fontPath],
+        defaultFontFamily: 'Inter',
+        sansSerifFamily: 'Inter',
+        monospaceFamily: 'Inter',
       },
     });
 
