@@ -1,7 +1,7 @@
 // Bitcoin Price, Chart History & Satoshi Conversion Utilities
 // Primary Provider: CoinGecko API | Fallback Provider: Binance Public API
 
-import { BitcoinData, BitcoinMarketData, ChartDataPoint } from '../types';
+import type { BitcoinData, BitcoinMarketData, ChartDataPoint } from '../types.js';
 
 export const SATOSHIS_IN_ONE_BITCOIN = 100_000_000;
 const COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';

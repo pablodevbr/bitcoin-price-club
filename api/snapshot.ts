@@ -1,9 +1,9 @@
 // API Route: /api/snapshot
 // Reads the latest daily snapshot from Vercel KV / Upstash Redis with live market fallback
 
-import { getDailySnapshot, saveDailySnapshot } from '../lib/kv';
-import { getBitcoinMarketData } from '../lib/crypto';
-import { generateMarketSummary } from '../lib/ai';
+import { getDailySnapshot, saveDailySnapshot } from '../lib/kv.js';
+import { getBitcoinMarketData } from '../lib/crypto.js';
+import { generateMarketSummary } from '../lib/ai.js';
 
 export const config = {
   maxDuration: 15,

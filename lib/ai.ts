@@ -1,6 +1,10 @@
 // LLM Market Sentiment & Summary Integration using Google Gemini
 import { GoogleGenAI } from '@google/genai';
-import { marketInsightPromptTemplate } from '../prompts/market-insight';
+import {
+  marketInsightPromptTemplate,
+  marketInsightFallbackPositiveTemplate,
+  marketInsightFallbackNegativeTemplate,
+} from '../prompts/market-insight.js';
 
 export interface MarketAnalysisInput {
   priceUsd: number;
@@ -52,7 +56,7 @@ function getApiKey(): string | undefined {
 
 /**
  * Generates an analytical market commentary (2 to 3 sentences maximum) using Gemini LLM.
- * Falls back gracefully to intelligent financial analysis in English if API key is unconfigured.
+ * Falls back gracefully to the templates in /prompts/market-insight.ts if API key is unconfigured.
  * @param data - Market metrics (price, 24h change, satoshis)
  */
 export async function generateMarketSummary(data: MarketAnalysisInput): Promise<string> {
@@ -74,21 +78,28 @@ export async function generateMarketSummary(data: MarketAnalysisInput): Promise<
         return text;
       }
     } catch (error) {
-      console.warn('Gemini AI Generation Error, using contextual fallback:', error);
+      console.warn('Gemini AI Generation Error, using contextual fallback from /prompts:', error);
     }
   }
 
-  // Intelligent Contextual Fallback in English based on live market momentum
+  // Interpolate fallback template from /prompts/market-insight.ts
   const isPositive = change24h >= 0;
-  const formattedPrice = `$${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const formattedChange = `${isPositive ? '+' : ''}${change24h.toFixed(2)}%`;
-  const formattedSats = satoshis.toLocaleString('en-US');
+  const priceFormatted = priceUsd.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const changeFormatted = `${isPositive ? '+' : ''}${change24h.toFixed(2)}`;
+  const satsFormatted = satoshis.toLocaleString('en-US');
 
-  if (isPositive) {
-    return `Bitcoin displays disciplined upward momentum trading at ${formattedPrice} USD (${formattedChange} in 24h). Institutional liquidity absorption remains robust as purchasing power holds steady at ${formattedSats} satoshis per dollar.`;
-  }
+  const fallbackTemplate = isPositive
+    ? marketInsightFallbackPositiveTemplate
+    : marketInsightFallbackNegativeTemplate;
 
-  return `Bitcoin is navigating a healthy technical consolidation trading at ${formattedPrice} USD (${formattedChange} in 24h). The retracement widens the strategic accumulation window for sovereign stackers (${formattedSats} satoshis per USD) with a disciplined long-term horizon.`;
+  return interpolatePrompt(fallbackTemplate, {
+    price: priceFormatted,
+    change24h: changeFormatted,
+    sats: satsFormatted,
+  });
 }
 
 /**

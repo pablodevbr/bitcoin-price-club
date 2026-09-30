@@ -1,10 +1,10 @@
 // Vercel Cron Job Serverless Function: /api/cron/daily-update
 // Triggered daily to fetch BTC price, generate AI insights, cache in KV, and broadcast to Telegram.
 
-import { getBitcoinMarketData } from '../../lib/crypto';
-import { generateMarketSummary } from '../../lib/ai';
-import { saveDailySnapshot } from '../../lib/kv';
-import { sendTelegramBroadcast } from '../../lib/telegram';
+import { getBitcoinMarketData } from '../../lib/crypto.js';
+import { generateMarketSummary } from '../../lib/ai.js';
+import { saveDailySnapshot } from '../../lib/kv.js';
+import { sendTelegramBroadcast } from '../../lib/telegram.js';
 
 export const config = {
   maxDuration: 60,
@@ -92,7 +92,7 @@ export default async function handler(req: any, res?: any) {
 
     let photoPayload: Buffer | string = ogImageUrl;
     try {
-      const { default: ogHandler } = await import('../og');
+      const { default: ogHandler } = await import('../og.js');
       let pngBuffer: Buffer | null = null;
       const mockReq = {
         url: ogImageUrl,
