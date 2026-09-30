@@ -3,7 +3,7 @@
 
 import { getDailySnapshot, saveDailySnapshot } from '../lib/kv.js';
 import { getBitcoinMarketData } from '../lib/crypto.js';
-import { generateMarketSummary } from '../lib/ai.js';
+import { generateMarketAnalysis } from '../lib/ai.js';
 
 export const config = {
   maxDuration: 15,
@@ -37,13 +37,16 @@ export default async function handler(req: any, res?: any) {
     // 2. Fallback: Fetch live market data and persist initial snapshot
     const marketData = await getBitcoinMarketData();
     let summary = 'Bitcoin continues to consolidate with disciplined market fundamentals.';
+    let newsTopics: string[] | undefined = undefined;
 
     try {
-      summary = await generateMarketSummary({
+      const analysis = await generateMarketAnalysis({
         priceUsd: marketData.priceUsd,
         change24h: marketData.change24h,
         satoshisPerDollar: marketData.satoshisPerDollar,
       });
+      summary = analysis.summary;
+      newsTopics = analysis.newsTopics;
     } catch {
       // Keep default summary on LLM error
     }
@@ -53,6 +56,7 @@ export default async function handler(req: any, res?: any) {
       change24h: marketData.change24h,
       satoshisPerDollar: marketData.satoshisPerDollar,
       summary,
+      newsTopics,
       updatedAt: marketData.lastUpdated,
     };
 

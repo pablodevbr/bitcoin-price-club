@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { getBitcoinMarketData } from '../lib/crypto.ts';
-import { generateMarketSummary } from '../lib/ai.ts';
+import { generateMarketAnalysis } from '../lib/ai.ts';
 import { saveDailySnapshot } from '../lib/kv.ts';
 import { sendTelegramBroadcast } from '../lib/telegram.ts';
 
@@ -49,14 +49,15 @@ async function testTelegramSend() {
   const formattedChange = `${changeSign}${market.change24h.toFixed(2)}%`;
   const formattedSats = market.satoshisPerDollar.toLocaleString('en-US');
 
-  // 3. Generate AI Market Insight
-  console.log('Generating AI Market Insight...');
-  const aiInsight = await generateMarketSummary({
+  // 3. Generate AI Market Insight & 24h News Topics
+  console.log('Generating AI Market Insight & 24h News Topics...');
+  const { summary: aiInsight, newsTopics } = await generateMarketAnalysis({
     priceUsd: market.priceUsd,
     change24h: market.change24h,
     satoshisPerDollar: market.satoshisPerDollar,
   });
   console.log('AI Insight:', aiInsight);
+  console.log('24h News Topics:', newsTopics);
 
   // 3.5 Persist snapshot so the website Home AI Insight card updates immediately
   await saveDailySnapshot({
@@ -64,6 +65,7 @@ async function testTelegramSend() {
     change24h: market.change24h,
     satoshisPerDollar: market.satoshisPerDollar,
     summary: aiInsight,
+    newsTopics,
     updatedAt: market.lastUpdated,
   });
   console.log('Updated Home AI Insight snapshot cache.');
@@ -98,7 +100,15 @@ async function testTelegramSend() {
 
   console.log('Generated card PNG buffer, byte size:', pngBuffer.length);
 
-  // 5. Formatted Telegram Caption in English including AI Insight
+  // 5. Formatted Telegram Caption in English including AI Insight and 24h News Topics
+  let newsSection = '';
+  if (newsTopics && newsTopics.length > 0) {
+    const formattedTopics = newsTopics
+      .map(topic => `• ${topic.replace(/</g, '&lt;').replace(/>/g, '&gt;')}`)
+      .join('\n');
+    newsSection = `\n\n📰 <b>24h Market Drivers:</b>\n${formattedTopics}`;
+  }
+
   const caption = `
 <b>₿ Bitcoin Price Club</b> • Daily Market Update
 
@@ -106,7 +116,7 @@ async function testTelegramSend() {
 ⚡ <b>Purchasing Power:</b> <code>${formattedSats} Satoshis / $1.00 USD</code>
 
 🧠 <b>AI Market Insight:</b>
-<i>"${aiInsight.trim()}"</i>
+<i>"${aiInsight.trim()}"</i>${newsSection}
 
 🌐 <a href="https://bitcoinprice.club">bitcoinprice.club</a>
 <i>Tap the card above to open in full view!</i>

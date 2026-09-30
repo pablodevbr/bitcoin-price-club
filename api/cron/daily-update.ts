@@ -2,7 +2,7 @@
 // Triggered daily to fetch BTC price, generate AI insights, cache in KV, and broadcast to Telegram.
 
 import { getBitcoinMarketData } from '../../lib/crypto.js';
-import { generateMarketSummary } from '../../lib/ai.js';
+import { generateMarketAnalysis } from '../../lib/ai.js';
 import { saveDailySnapshot } from '../../lib/kv.js';
 import { sendTelegramBroadcast } from '../../lib/telegram.js';
 
@@ -31,8 +31,8 @@ export default async function handler(req: any, res?: any) {
     // 2. Fetch Bitcoin market data (CoinGecko with Binance fallback)
     const marketData = await getBitcoinMarketData();
 
-    // 3. Generate AI summary (Google Gemini)
-    const summary = await generateMarketSummary({
+    // 3. Generate AI summary and 24h news topics (Google Gemini)
+    const { summary, newsTopics } = await generateMarketAnalysis({
       priceUsd: marketData.priceUsd,
       change24h: marketData.change24h,
       satoshisPerDollar: marketData.satoshisPerDollar,
@@ -44,6 +44,7 @@ export default async function handler(req: any, res?: any) {
       change24h: marketData.change24h,
       satoshisPerDollar: marketData.satoshisPerDollar,
       summary,
+      newsTopics,
       updatedAt: marketData.lastUpdated,
     };
     await saveDailySnapshot(snapshot);
@@ -55,9 +56,18 @@ export default async function handler(req: any, res?: any) {
 
     // Truncate summary if needed so the total Telegram photo caption never exceeds 1000 characters
     let cleanSummary = summary.trim();
-    const maxSummaryLength = 700;
+    const maxSummaryLength = 450;
     if (cleanSummary.length > maxSummaryLength) {
       cleanSummary = `${cleanSummary.substring(0, maxSummaryLength - 3)}...`;
+    }
+
+    // Format 24h news topics bullet list
+    let newsSection = '';
+    if (newsTopics && newsTopics.length > 0) {
+      const formattedTopics = newsTopics
+        .map(topic => `• ${topic.replace(/</g, '&lt;').replace(/>/g, '&gt;')}`)
+        .join('\n');
+      newsSection = `\n\n📰 <b>24h Market Drivers:</b>\n${formattedTopics}`;
     }
 
     let telegramCaption = `
@@ -67,7 +77,7 @@ export default async function handler(req: any, res?: any) {
 ⚡ <b>Purchasing Power:</b> <code>${formattedSats} / $1.00 USD</code>
 
 🧠 <b>AI Market Insight:</b>
-<i>"${cleanSummary}"</i>
+<i>"${cleanSummary}"</i>${newsSection}
 
 🌐 <a href="https://bitcoinprice.club">bitcoinprice.club</a>
 <i>Tap the card above to open in full view!</i>

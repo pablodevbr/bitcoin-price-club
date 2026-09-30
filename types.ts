@@ -19,11 +19,17 @@ export interface BitcoinMarketData {
   lastUpdated: string;
 }
 
+export interface MarketInsightResult {
+  summary: string;
+  newsTopics: string[];
+}
+
 export interface DailySnapshot {
   priceUsd: number;
   change24h: number;
   satoshisPerDollar: number;
   summary: string;
+  newsTopics?: string[];
   updatedAt: string;
 }
 
