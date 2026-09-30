@@ -36,10 +36,10 @@ const App: React.FC = () => {
     try {
       setLoading(true);
 
-      // 1. Try reading the daily snapshot from Vercel KV via /api/snapshot
+      // 1. Try reading the daily snapshot from Vercel KV / cache via /api/snapshot
       let snapshotSummary: string | undefined = undefined;
       try {
-        const snapshotRes = await fetch('/api/snapshot');
+        const snapshotRes = await fetch(`/api/snapshot?t=${Date.now()}`, { cache: 'no-store' });
         if (snapshotRes.ok) {
           const snapshotJson = await snapshotRes.json();
           if (snapshotJson?.data?.summary) {
@@ -66,7 +66,12 @@ const App: React.FC = () => {
   useEffect(() => {
     loadData();
     const interval = setInterval(loadData, 60000); // Refresh every minute
-    return () => clearInterval(interval);
+    const handleFocus = () => loadData();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [loadData]);
 
   return (

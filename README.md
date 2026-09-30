@@ -18,7 +18,7 @@
 * **High-Performance Telegram Card Generator (`/api/og`):** Generates **1024 x 267px** cards on-the-fly using `@resvg/resvg-js` (Rust-powered vector rendering in <2ms). Engineered specifically for Telegram chat preview containers:
   * **In-Chat Preview (Before Click):** Center stage (x: 260–764) remains 100% visible and centered (3D Bitcoin Medallion, massive spot price, and Telegram pill badge).
   * **Full Lightbox View (After Click):** Tapping the image reveals the creative side wings with 3D tilted gold coins, volatility/momentum arrows, 24h delta capsule, and Satoshi purchasing power metrics.
-* **Automated Telegram Broadcasts:** Scheduled daily execution at `00:00 UTC` via Vercel Cron (`/api/cron/daily-update`) and instant manual dispatches via `npm run broadcast`.
+* **Automated Telegram Broadcasts:** Scheduled daily execution at `11:00 UTC` via Vercel Cron (`/api/cron/daily-update`) and instant manual dispatches via `npm run broadcast`.
 * **Vercel KV / Upstash Redis Caching:** Persists and serves daily market snapshots with zero cold-start latency.
 * **One-Click Sharing to X (Twitter):** Pre-formatted share intent with live metrics, AI summary quotes, and hashtags.
 * **Theme Switching:** Sleek dark/light mode with high-contrast luxury crypto aesthetics.
@@ -45,7 +45,7 @@
 │   └── test_telegram_send.ts # Standalone TypeScript broadcast runner (used by npm run broadcast)
 ├── components/               # UI components (PriceCard, SatoshiCard, MarketChart, AiInsight, ShareButton)
 ├── types.ts                  # Unified data contracts across frontend, APIs, and background jobs
-└── vercel.json               # Cron schedule (00:00 UTC) & main branch deployment filter
+└── vercel.json               # Cron schedule (11:00 UTC) & main branch deployment filter
 ```
 
 * **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Recharts, Lucide Icons.
@@ -125,7 +125,7 @@ Retrieves the latest market data and AI sentiment snapshot from Vercel KV cache 
 ---
 
 ### 3. Automated Daily Cron (`/api/cron/daily-update`)
-Triggered automatically every day at `00:00 UTC` by Vercel Cron.
+Triggered automatically every day at `11:00 UTC` by Vercel Cron.
 
 * **Method:** `GET`
 * **Path:** `/api/cron/daily-update`
@@ -213,7 +213,7 @@ KV_REST_API_TOKEN=your_upstash_rest_token
 
 The repository is configured with [`vercel.json`](file:///c:/Users/pablo/Documents/DEV/MyProjects/bitcoin-price-club/vercel.json):
 * **Branch Policy:** `ignoreCommand` ensures automated production deployments only trigger on pushes to the `main` branch. Development branches (`dev`, `feature/*`) bypass automatic builds.
-* **Cron Schedule:** Automated daily execution scheduled at `0 0 * * *` (00:00 UTC).
+* **Cron Schedule:** Automated daily execution scheduled at `0 11 * * *` (11:00 UTC).
 
 ---
 

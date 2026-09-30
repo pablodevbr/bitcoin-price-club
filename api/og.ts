@@ -3,8 +3,9 @@
 // Center stage is visible before click; creative wings are revealed after clicking!
 
 import { Resvg } from '@resvg/resvg-js';
-import { getDailySnapshot } from '../lib/kv';
+import { getDailySnapshot, saveDailySnapshot } from '../lib/kv';
 import { getBitcoinMarketData } from '../lib/crypto';
+import { generateMarketSummary } from '../lib/ai';
 
 export const config = {
   maxDuration: 15,
@@ -281,10 +282,11 @@ export default async function handler(req: any, res?: any) {
       channelParam = `@${channelParam}`;
     }
 
-    // 2. Fallback to KV snapshot or live crypto fetch if parameters are omitted
+    // 2. Check KV snapshot or live crypto fetch
+    let cachedSnapshot = await getDailySnapshot().catch(() => null);
+
     if (!priceParam || !changeParam || !satsParam) {
       try {
-        const cachedSnapshot = await getDailySnapshot();
         if (cachedSnapshot) {
           if (!priceParam) priceParam = String(cachedSnapshot.priceUsd);
           if (!changeParam) changeParam = String(cachedSnapshot.change24h);
@@ -304,7 +306,32 @@ export default async function handler(req: any, res?: any) {
     // 3. Format values
     const numericPrice = parseFloat(priceParam || '96500');
     const numericChange = parseFloat(changeParam || '0');
-    const numericSats = parseInt(satsParam || '1036', 10);
+    const numericSats = parseInt(satsParam || String(Math.round(100_000_000 / (numericPrice || 96500))), 10);
+
+    // 3.5 If snapshot is missing or price/change differs, generate AI insight and update snapshot for Home page
+    if (
+      !isNaN(numericPrice) &&
+      (!cachedSnapshot ||
+        Math.abs(cachedSnapshot.priceUsd - numericPrice) > 0.01 ||
+        Math.abs(cachedSnapshot.change24h - numericChange) > 0.01)
+    ) {
+      try {
+        const summary = await generateMarketSummary({
+          priceUsd: numericPrice,
+          change24h: numericChange,
+          satoshisPerDollar: numericSats,
+        });
+        await saveDailySnapshot({
+          priceUsd: numericPrice,
+          change24h: numericChange,
+          satoshisPerDollar: numericSats,
+          summary,
+          updatedAt: new Date().toISOString(),
+        });
+      } catch (syncErr) {
+        console.warn('Could not sync AI insight snapshot during OG generation:', syncErr);
+      }
+    }
 
     const formattedPrice = isNaN(numericPrice)
       ? '$96,500'

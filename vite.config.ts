@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  Object.assign(process.env, env);
   return {
     server: {
       port: 3000,
@@ -15,7 +16,12 @@ export default defineConfig(({ mode }) => {
         name: 'api-dev-middleware',
         configureServer(server) {
           server.middlewares.use(async (req, res, next) => {
-            if (req.url && (req.url.startsWith('/api/og') || req.url.startsWith('/api/snapshot'))) {
+            if (
+              req.url &&
+              (req.url.startsWith('/api/og') ||
+                req.url.startsWith('/api/snapshot') ||
+                req.url.startsWith('/api/cron/daily-update'))
+            ) {
               try {
                 // Polyfill status and json for Node http.ServerResponse if needed
                 if (!(res as any).status) {
@@ -38,6 +44,11 @@ export default defineConfig(({ mode }) => {
 
                 if (req.url.startsWith('/api/snapshot')) {
                   const { default: handler } = await server.ssrLoadModule('/api/snapshot.ts');
+                  return handler(req, res);
+                }
+
+                if (req.url.startsWith('/api/cron/daily-update')) {
+                  const { default: handler } = await server.ssrLoadModule('/api/cron/daily-update.ts');
                   return handler(req, res);
                 }
               } catch (err) {

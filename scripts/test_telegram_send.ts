@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { getBitcoinMarketData } from '../lib/crypto.ts';
 import { generateMarketSummary } from '../lib/ai.ts';
+import { saveDailySnapshot } from '../lib/kv.ts';
 import { sendTelegramBroadcast } from '../lib/telegram.ts';
 
 // Load .env.local manually
@@ -56,6 +57,16 @@ async function testTelegramSend() {
     satoshisPerDollar: market.satoshisPerDollar,
   });
   console.log('AI Insight:', aiInsight);
+
+  // 3.5 Persist snapshot so the website Home AI Insight card updates immediately
+  await saveDailySnapshot({
+    priceUsd: market.priceUsd,
+    change24h: market.change24h,
+    satoshisPerDollar: market.satoshisPerDollar,
+    summary: aiInsight,
+    updatedAt: market.lastUpdated,
+  });
+  console.log('Updated Home AI Insight snapshot cache.');
 
   // 4. Generate 1024x267 card via api/og
   const { default: ogHandler } = await import('../api/og.ts');

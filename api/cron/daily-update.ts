@@ -78,19 +78,49 @@ export default async function handler(req: any, res?: any) {
       telegramCaption = `${telegramCaption.substring(0, 995)}...`;
     }
 
-    // Dynamic clean OG image URL with cache-buster for Telegram
+    // Render 1024x267 PNG card directly in-memory (fallback to public URL if needed)
     const host =
       (req?.headers?.get ? req.headers.get('host') : req?.headers?.host) ||
       'bitcoinprice.club';
     const protocol = host.includes('localhost') ? 'http' : 'https';
-    const channelParam = encodeURIComponent(
+    const channelHandle =
       process.env.TELEGRAM_CHANNEL_HANDLE ||
       process.env.TELEGRAM_CHANNEL_ID ||
-      '@bitcoinpriceclub'
-    );
+      '@bitcoinpriceclub';
+    const channelParam = encodeURIComponent(channelHandle);
     const ogImageUrl = `${protocol}://${host}/api/og?price=${marketData.priceUsd}&change=${marketData.change24h}&sats=${marketData.satoshisPerDollar}&channel=${channelParam}&t=${Date.now()}`;
 
-    const telegramResult = await sendTelegramBroadcast(ogImageUrl, telegramCaption);
+    let photoPayload: Buffer | string = ogImageUrl;
+    try {
+      const { default: ogHandler } = await import('../og');
+      let pngBuffer: Buffer | null = null;
+      const mockReq = {
+        url: ogImageUrl,
+        query: {
+          price: String(marketData.priceUsd),
+          change: String(marketData.change24h),
+          sats: String(marketData.satoshisPerDollar),
+          channel: channelHandle,
+        },
+      };
+      const mockRes = {
+        setHeader() {},
+        end(buf: any) {
+          pngBuffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+        },
+        status() {
+          return { json() {} };
+        },
+      };
+      await ogHandler(mockReq, mockRes);
+      if (pngBuffer) {
+        photoPayload = pngBuffer;
+      }
+    } catch (ogErr) {
+      console.warn('In-memory OG generation fallback to URL:', ogErr);
+    }
+
+    const telegramResult = await sendTelegramBroadcast(photoPayload, telegramCaption);
 
     const responseData = {
       success: true,
