@@ -1,21 +1,15 @@
 // Bitcoin Price, Chart History & Satoshi Conversion Utilities
 // Multi-Provider Resilient Architecture:
 // 1. CoinGecko API
-// 2. Binance Public Data API (data-api.binance.vision - global/US accessible without 451 geoblock)
-// 3. Kraken Public API (US/Global regulated fallback)
+// 2. Binance Public API (fast global & browser CORS support)
+// 3. Kraken Public API (US/Vercel serverless & global fallback, immune to HTTP 451)
 
 import type { BitcoinData, BitcoinMarketData, ChartDataPoint } from '../types.js';
 
 export const SATOSHIS_IN_ONE_BITCOIN = 100_000_000;
 const COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
-const BINANCE_VISION_BASE_URL = 'https://data-api.binance.vision/api/v3';
-const BINANCE_GLOBAL_BASE_URL = 'https://api.binance.com/api/v3';
+const BINANCE_BASE_URL = 'https://api.binance.com/api/v3';
 const KRAKEN_BASE_URL = 'https://api.kraken.com/0/public';
-
-const COMMON_HEADERS = {
-  Accept: 'application/json',
-  'User-Agent': 'BitcoinPriceClub/1.0 (+https://bitcoinprice.club)',
-};
 
 /**
  * Calculates the amount of Satoshis purchasable for $1.00 USD.
@@ -32,7 +26,7 @@ export function calculateSatoshisPerDollar(priceUsd: number): number {
 async function fetchFromCoinGecko(): Promise<BitcoinData> {
   const priceRes = await fetch(
     `${COINGECKO_BASE_URL}/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`,
-    { headers: COMMON_HEADERS }
+    { headers: { Accept: 'application/json' } }
   );
 
   if (!priceRes.ok) {
@@ -49,7 +43,7 @@ async function fetchFromCoinGecko(): Promise<BitcoinData> {
   try {
     const historyRes = await fetch(
       `${COINGECKO_BASE_URL}/coins/bitcoin/market_chart?vs_currency=usd&days=1`,
-      { headers: COMMON_HEADERS }
+      { headers: { Accept: 'application/json' } }
     );
     if (historyRes.ok) {
       const historyJson = await historyRes.json();
@@ -71,16 +65,15 @@ async function fetchFromCoinGecko(): Promise<BitcoinData> {
 }
 
 /**
- * Provider 2: Fetches current price, 24h change and klines history from Binance Public Market Data.
- * Uses data-api.binance.vision first to avoid HTTP 451 geoblocking on US/Vercel serverless regions.
+ * Provider 2: Fetches current price, 24h change and klines history from Binance.
  */
-async function fetchFromBinance(baseUrl = BINANCE_VISION_BASE_URL): Promise<BitcoinData> {
-  const tickerRes = await fetch(`${baseUrl}/ticker/24hr?symbol=BTCUSDT`, {
-    headers: COMMON_HEADERS,
+async function fetchFromBinance(): Promise<BitcoinData> {
+  const tickerRes = await fetch(`${BINANCE_BASE_URL}/ticker/24hr?symbol=BTCUSDT`, {
+    headers: { Accept: 'application/json' },
   });
 
   if (!tickerRes.ok) {
-    throw new Error(`Binance ticker API error (${baseUrl}): ${tickerRes.status}`);
+    throw new Error(`Binance ticker API error: ${tickerRes.status}`);
   }
 
   const tickerData = await tickerRes.json();
@@ -94,8 +87,8 @@ async function fetchFromBinance(baseUrl = BINANCE_VISION_BASE_URL): Promise<Bitc
   let history: ChartDataPoint[] = [];
   try {
     const klinesRes = await fetch(
-      `${baseUrl}/klines?symbol=BTCUSDT&interval=1h&limit=24`,
-      { headers: COMMON_HEADERS }
+      `${BINANCE_BASE_URL}/klines?symbol=BTCUSDT&interval=1h&limit=24`,
+      { headers: { Accept: 'application/json' } }
     );
     if (klinesRes.ok) {
       const klines = await klinesRes.json();
@@ -118,11 +111,11 @@ async function fetchFromBinance(baseUrl = BINANCE_VISION_BASE_URL): Promise<Bitc
 
 /**
  * Provider 3: Fetches current price, 24h change and OHLC history from Kraken Public API.
- * Regulated in the US and globally accessible from all serverless cloud providers.
+ * Regulated in the US and globally accessible from all serverless cloud providers (no HTTP 451).
  */
 async function fetchFromKraken(): Promise<BitcoinData> {
   const tickerRes = await fetch(`${KRAKEN_BASE_URL}/Ticker?pair=XBTUSD`, {
-    headers: COMMON_HEADERS,
+    headers: { Accept: 'application/json' },
   });
 
   if (!tickerRes.ok) {
@@ -149,7 +142,7 @@ async function fetchFromKraken(): Promise<BitcoinData> {
   let history: ChartDataPoint[] = [];
   try {
     const ohlcRes = await fetch(`${KRAKEN_BASE_URL}/OHLC?pair=XBTUSD&interval=60`, {
-      headers: COMMON_HEADERS,
+      headers: { Accept: 'application/json' },
     });
     if (ohlcRes.ok) {
       const ohlcJson = await ohlcRes.json();
@@ -174,36 +167,25 @@ async function fetchFromKraken(): Promise<BitcoinData> {
 }
 
 /**
- * Fetches full Bitcoin data including chart history with multi-provider resilient failover.
+ * Fetches full Bitcoin data including chart history with multi-provider resilient failover:
+ * CoinGecko -> Binance -> Kraken
  */
 export async function fetchBitcoinData(): Promise<BitcoinData> {
-  // 1. Try CoinGecko
   try {
     return await fetchFromCoinGecko();
   } catch (cgError) {
-    console.warn('CoinGecko failed, attempting Binance Vision API...', cgError);
-  }
-
-  // 2. Try Binance Vision (US & Global friendly, avoids HTTP 451)
-  try {
-    return await fetchFromBinance(BINANCE_VISION_BASE_URL);
-  } catch (bvError) {
-    console.warn('Binance Vision failed, attempting Kraken API...', bvError);
-  }
-
-  // 3. Try Kraken Public API (US & Global friendly)
-  try {
-    return await fetchFromKraken();
-  } catch (krakenError) {
-    console.warn('Kraken failed, attempting Binance Global API...', krakenError);
-  }
-
-  // 4. Last resort: Binance Global
-  try {
-    return await fetchFromBinance(BINANCE_GLOBAL_BASE_URL);
-  } catch (finalError) {
-    console.error('All Bitcoin price providers failed:', finalError);
-    throw new Error('Failed to fetch Bitcoin data from all available sources.');
+    console.warn('CoinGecko failed, attempting fallback to Binance...', cgError);
+    try {
+      return await fetchFromBinance();
+    } catch (binanceError) {
+      console.warn('Binance failed, attempting fallback to Kraken...', binanceError);
+      try {
+        return await fetchFromKraken();
+      } catch (krakenError) {
+        console.error('All Bitcoin price providers failed:', krakenError);
+        throw new Error('Failed to fetch Bitcoin data from all available sources.');
+      }
+    }
   }
 }
 
